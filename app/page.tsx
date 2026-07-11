@@ -31,15 +31,16 @@ GROUP=主節奏|AZBXX10|3
 GROUP=收尾|1234XXXX|1
 `;
 
-type Group={name:string;sequence:string[];loops:number;raw:string};
-type Config={groups:Group[];bpm:number;totalLoops:number;volume:number;musicVolume:number;instructor:string;modules:string[];errors:string[]};
+type Group={name:string;sequence:string[];loops:number;raw:string;setName:string};
+type Config={groups:Group[];setNames:string[];bpm:number;totalLoops:number;volume:number;musicVolume:number;instructor:string;modules:string[];errors:string[]};
 
 function legacy(value:string){
   const m=value.trim().toUpperCase().match(/^(.*?)(?:-(\d+))?$/);
   return {pattern:(m?.[1]||"").replace(/[\s,，|｜]/g,""),loops:m?.[2]===undefined?1:Number(m[2])};
 }
 function parseConfig(text:string):Config{
-  const config:Config={groups:[],bpm:96,totalLoops:1,volume:75,musicVolume:45,instructor:"",modules:[],errors:[]};
+  const config:Config={groups:[],setNames:[],bpm:96,totalLoops:1,volume:75,musicVolume:45,instructor:"",modules:[],errors:[]};
+  let currentSet="\u7fa4\u7d441";
   for(const original of text.split(/\r?\n/)){
     const line=original.trim();
     if(!line||line.startsWith("#"))continue;
@@ -53,6 +54,10 @@ function parseConfig(text:string):Config{
     else if(key==="MUSIC_VOLUME")config.musicVolume=Math.min(100,Math.max(0,Number(value)||0));
     else if(key==="INSTRUCTOR")config.instructor=value;
     else if(key==="MODULE")config.modules.push(value);
+    else if(key==="GROUP_SET"){
+      currentSet=value||"\u7fa4\u7d44"+(config.setNames.length+1);
+      if(!config.setNames.includes(currentSet))config.setNames.push(currentSet);
+    }
     else if(key==="GROUP"){
       const parts=value.split("|").map(v=>v.trim());
       let name="",pattern="",loops=1;
@@ -61,7 +66,7 @@ function parseConfig(text:string):Config{
       const invalid=[...pattern].filter(c=>!SYMBOLS.includes(c));
       if(!pattern)config.errors.push((name||"未命名組")+" 沒有節奏");
       else if(invalid.length)config.errors.push((name||"未命名組")+" 有無法辨識的字元："+[...new Set(invalid)].join("、"));
-      else config.groups.push({name:name||"節奏 "+(config.groups.length+1),sequence:[...pattern],loops,raw:pattern});
+      else config.groups.push({name:name||"節奏 "+(config.groups.length+1),sequence:[...pattern],loops,raw:pattern,setName:currentSet});
     }
   }
   if(!config.groups.length)config.errors.push("至少需要一組 GROUP");
@@ -74,6 +79,7 @@ export default function Home(){
   const [config,setConfig]=useState<Config>(()=>parseConfig(FALLBACK));
   const [profileOpen,setProfileOpen]=useState(true);
   const [selectedModule,setSelectedModule]=useState(0);
+  const [activeSet,setActiveSet]=useState("\u7fa4\u7d441");
   const [playing,setPlaying]=useState(false);
   const [groupIndex,setGroupIndex]=useState(0);
   const [stepIndex,setStepIndex]=useState(-1);
@@ -85,7 +91,8 @@ export default function Home(){
   const timerRef=useRef<ReturnType<typeof setInterval>|null>(null);
   const groupRef=useRef(0),stepRef=useRef(0),groupLoopRef=useRef(0),totalLoopRef=useRef(0);
   const audioRef=useRef<HTMLAudioElement|null>(null),urlRef=useRef<string|null>(null);
-  const currentGroup=config.groups[groupIndex]||config.groups[0];
+  const activeGroups=useMemo(()=>config.groups.filter(g=>g.setName===activeSet),[config.groups,activeSet]);
+  const currentGroup=activeGroups[groupIndex]||activeGroups[0];
   const currentSymbol=stepIndex>=0&&currentGroup?currentGroup.sequence[stepIndex]:"♪";
 
   const applyText=useCallback((content:string,label="文字編輯器")=>{
@@ -93,6 +100,8 @@ export default function Home(){
     setText(content);setConfig(next);setSource(label);
     setStatus(next.errors.length?next.errors[0]:"已套用 "+next.groups.length+" 組節奏");
   },[]);
+
+  useEffect(()=>{if(config.setNames.length&&!config.setNames.includes(activeSet))setActiveSet(config.setNames[0])},[config.setNames,activeSet]);
 
   useEffect(()=>{fetch("/default.txt?"+Date.now()).then(r=>{if(!r.ok)throw new Error();return r.text()}).then(t=>applyText(t,"default.txt")).catch(()=>applyText(FALLBACK,"內建範例"));},[applyText]);
 
@@ -106,7 +115,7 @@ export default function Home(){
   const stop=useCallback((message="已停止")=>{if(timerRef.current)clearInterval(timerRef.current);timerRef.current=null;setPlaying(false);setStepIndex(-1);setStatus(message);if(audioRef.current){audioRef.current.pause();audioRef.current.currentTime=0}},[]);
 
   const tick=useCallback(()=>{
-    const groups=config.groups;if(!groups.length)return;
+    const groups=activeGroups;if(!groups.length)return;
     const gi=groupRef.current,g=groups[gi],si=stepRef.current,s=g.sequence[si];
     setGroupIndex(gi);setStepIndex(si);setStatus(s==="X"?"第 "+(gi+1)+" 組「"+g.name+"」・休息一拍":"第 "+(gi+1)+" 組「"+g.name+"」・"+s+" "+NAMES[SYMBOLS.indexOf(s)]);sound(s);stepRef.current++;
     if(stepRef.current>=g.sequence.length){
@@ -120,7 +129,7 @@ export default function Home(){
         }
       }
     }
-  },[config,sound,stop]);
+  },[activeGroups,config,sound,stop]);
 
   const start=useCallback(()=>{
     if(config.errors.length)return setStatus(config.errors[0]);
@@ -128,6 +137,8 @@ export default function Home(){
     if(audioRef.current&&musicName){audioRef.current.currentTime=0;audioRef.current.volume=config.musicVolume/100;audioRef.current.loop=true;void audioRef.current.play()}
     tick();timerRef.current=setInterval(tick,Math.round(60000/config.bpm));
   },[config,musicName,tick]);
+
+  const selectSet=useCallback((setName:string)=>{stop("\u5df2\u9078\u64c7"+setName+"\uff0c\u6309\u958b\u59cb\u64ad\u653e");setActiveSet(setName);setGroupIndex(0);setStepIndex(-1);setGroupDone(0);setTotalDone(0)},[stop]);
 
   useEffect(()=>{if(!playing)return;if(timerRef.current)clearInterval(timerRef.current);timerRef.current=setInterval(tick,Math.round(60000/config.bpm));return()=>{if(timerRef.current)clearInterval(timerRef.current)}},[config.bpm,playing,tick]);
   useEffect(()=>{if(audioRef.current)audioRef.current.volume=config.musicVolume/100},[config.musicVolume]);
@@ -155,14 +166,14 @@ export default function Home(){
     <section className={"profile-card "+(profileOpen?"expanded":"compact")}>
       <div className="profile-header">
         <div className="profile-title"><img src="/chen-yufong-logo.png" alt="陳裕豐（順豐）Logo"/><div><span>模組老師</span><h2>{config.instructor||"陳裕豐（順豐）"}</h2></div></div>
-        <button className="profile-toggle" onClick={()=>setProfileOpen(!profileOpen)}>{profileOpen?"隱藏基本資料":"展開基本資料"}</button>
+        <button className="profile-toggle icon-button" aria-label={profileOpen?"\u96b1\u85cf\u57fa\u672c\u8cc7\u6599":"\u5c55\u958b\u57fa\u672c\u8cc7\u6599"} title={profileOpen?"\u96b1\u85cf\u57fa\u672c\u8cc7\u6599":"\u5c55\u958b\u57fa\u672c\u8cc7\u6599"} onClick={()=>setProfileOpen(!profileOpen)}><span aria-hidden="true">{profileOpen?"\u2303":"\u2304"}</span></button>
       </div>
-      {profileOpen ? <div className="module-list">{config.modules.map((module,index)=><div key={module+index}><span>{index+1}</span><b>{module}</b></div>)}</div> : <div className="module-picker"><label htmlFor="current-module">目前上課模組</label><select id="current-module" value={selectedModule} onChange={e=>setSelectedModule(Number(e.target.value))}>{config.modules.map((module,index)=><option key={module+index} value={index}>{module}</option>)}</select><strong>{config.modules[selectedModule]||"尚未設定模組"}</strong></div>}
+      {profileOpen ? <div className="module-list">{config.modules.map((module,index)=><div key={module+index}><span>{index+1}</span><b>{module}</b></div>)}</div> : <div className="module-picker"><label htmlFor="current-module">目前上課模組</label><select id="current-module" value={selectedModule} onChange={e=>setSelectedModule(Number(e.target.value))}>{config.modules.map((module,index)=><option key={module+index} value={index}>{module}</option>)}</select></div>}
     </section>
     <section className="hero-grid">
       <div className={"beat-stage "+(playing?"is-playing ":"")+(currentSymbol==="X"?"is-rest":"")}><small>現在節拍・第 {groupIndex+1} 組</small><strong className="beat-symbol">{currentSymbol}</strong><b>{currentGroup?.name||"準備開始"}</b><p>{status}</p><div className="progress">{currentGroup?.sequence.map((s,i)=><span key={s+i} className={i===stepIndex?"active":""}>{s}</span>)}</div></div>
       <div className="control-card playlist-card"><div className="playlist-head"><div><span className="source-badge">來源：{source}</span><h2>節奏播放清單</h2></div><b>{config.groups.length} 組</b></div>
-        <div className="group-list">{config.groups.map((g,i)=><div key={g.name+i} className={i===groupIndex&&playing?"group-row current":"group-row"}><span>{i+1}</span><div><b>{g.name}</b><code>{g.raw}</code></div><small>{g.loops===0?"無限循環":g.loops+" 次"}</small></div>)}</div>
+        <div className="group-list">{activeGroups.map((g,i)=><div key={g.name+i} className={i===groupIndex&&playing?"group-row current":"group-row"}><span>{i+1}</span><b>{g.name}</b><code>{g.raw}</code><small>{g.loops===0?"無限":g.loops+"次"}</small></div>)}</div>
         {config.errors.length>0&&<div className="error">{config.errors.join("；")}</div>}
         <div className="summary"><div><span>總循環</span><b>{config.totalLoops===0?"無限":config.totalLoops+" 輪"}</b></div><div><span>已完成</span><b>{totalDone} 輪</b></div><div><span>本組完成</span><b>{groupDone} 次</b></div></div>
         <div className="actions"><button className="start" onClick={start} disabled={playing||!!config.errors.length}>▶ 播放全部</button><button onClick={()=>stop()} disabled={!playing}>■ 停止</button></div>
@@ -173,7 +184,7 @@ export default function Home(){
 
     <section className="editor-panel">
       <details><summary><span><b>文字設計檔編輯器</b><small>點擊展開，可修改 default.txt 或載入其他設計檔</small></span><strong>展開編輯</strong></summary>
-        <div className="editor-toolbar"><label className="mini-file"><input type="file" accept=".txt,text/plain" onChange={loadDesign}/>讀取其他 .txt</label><button onClick={()=>fetch("/default.txt?"+Date.now()).then(r=>r.text()).then(t=>applyText(t,"default.txt"))}>重新讀取 default.txt</button><button onClick={saveDesign}>另存設計檔</button><button className="apply" onClick={()=>applyText(text,source)}>套用文字內容</button></div>
+        <div className="editor-toolbar"><div className="editor-actions"><label className="mini-file"><input type="file" accept=".txt,text/plain" onChange={loadDesign}/>讀取其他 .txt</label><button onClick={()=>fetch("/default.txt?"+Date.now()).then(r=>r.text()).then(t=>applyText(t,"default.txt"))}>重新讀取 default.txt</button><button onClick={saveDesign}>另存設計檔</button><button className="apply" onClick={()=>applyText(text,source)}>套用文字內容</button></div><div className="group-tabs" aria-label="節奏群組選擇">{config.setNames.map(setName=><button key={setName} className={setName===activeSet?"selected":""} onClick={()=>selectSet(setName)}>{setName}</button>)}</div></div>
         <textarea value={text} onChange={e=>setText(e.target.value)} spellCheck={false} aria-label="節奏設計檔文字編輯器"/>
         <p>所有參數與格式說明都寫在檔案的 <code># 註解</code> 中；修改後請按「套用文字內容」。</p>
       </details>

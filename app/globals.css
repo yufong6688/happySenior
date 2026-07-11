@@ -16,3 +16,42 @@
 /* 基本資料置頂、可收合 */
 .profile-card{margin-top:0;display:block;padding:22px 26px}.profile-header{display:flex;align-items:center;justify-content:space-between;gap:18px}.profile-title{gap:20px}.profile-title img{width:140px;height:140px;border-radius:28px}.profile-title span{font-size:1.4rem}.profile-title h2{font-size:2.5rem;margin:8px 0 0}.profile-toggle{min-height:48px;padding:10px 16px;border:1px solid #cfd8d3;border-radius:14px;background:#fff;color:var(--teal-dark);font-weight:900;cursor:pointer}.profile-toggle:hover{border-color:var(--teal);background:#eef9f6}.module-list{gap:0;margin-top:20px;border-top:1px solid var(--line)}.module-list>div{border-radius:0;border-bottom:1px solid var(--line);background:transparent;padding:10px 4px}.module-list>div:last-child{border-bottom:0}.module-picker{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:10px 16px;margin-top:18px;padding:16px;border-radius:16px;background:#f4f7f1}.module-picker label{font-weight:900}.module-picker select{min-height:44px;padding:8px 12px;border:2px solid #d6dfda;border-radius:12px;background:#fff;color:var(--ink);font-weight:800}.module-picker strong{grid-column:1/-1;color:var(--teal-dark);font-size:1.2rem}.profile-card.compact .profile-title img{width:108px;height:108px}.profile-card.compact{padding:16px 26px}
 @media(max-width:760px){.profile-title img,.profile-card.compact .profile-title img{width:96px;height:96px}.profile-title span{font-size:1.15rem}.profile-title h2{font-size:2rem}.profile-header{align-items:flex-start;flex-direction:column}.profile-toggle{align-self:flex-end}.module-picker{grid-template-columns:1fr}.module-picker select{width:100%}.module-picker strong{grid-column:auto}}
+/* ???????????? */
+.profile-card.expanded{display:grid;grid-template-columns:minmax(260px,.58fr) minmax(0,1.42fr);align-items:start;gap:26px}
+.profile-card.expanded .profile-header{grid-column:1}
+.profile-card.expanded .module-list{grid-column:2;grid-row:1;margin-top:0;align-content:start}
+.module-list{gap:0;border:0}
+.module-list>div{display:flex;gap:10px;align-items:baseline;border:0;border-radius:0;background:transparent;padding:1px 0;line-height:1.2}
+.module-list>div span{width:24px;height:24px;border-radius:8px;flex:none}
+.profile-toggle.icon-button{display:grid;place-items:center;width:38px;height:38px;min-height:38px;padding:0;border-radius:50%;font-size:1.5rem;line-height:1}
+.profile-card.compact{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px}
+.profile-card.compact .profile-header{grid-column:1/-1}
+.profile-card.compact .module-picker{grid-column:1/-1;margin-top:0}
+.profile-card.compact .module-picker label{display:none}
+.profile-card.compact .module-picker{grid-template-columns:1fr}
+.profile-card.compact .module-picker select{width:100%}
+.group-list{gap:4px}
+.group-row{grid-template-columns:28px minmax(82px,max-content) minmax(0,1fr) auto;gap:8px;padding:5px 8px;border-radius:10px}
+.group-row>span{width:26px;height:26px;border-radius:8px}
+.group-row b,.group-row code,.group-row small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.group-row code{margin-top:0}
+.editor-toolbar{display:flex;justify-content:space-between;align-items:center;gap:14px}
+.editor-actions{display:flex;flex-wrap:wrap;gap:10px}
+.group-tabs{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;margin-left:auto}
+.group-tabs button{min-height:40px;padding:7px 12px;border:1px solid #cfd8d3;border-radius:10px;background:#fff;color:var(--ink);font-weight:900;cursor:pointer}
+.group-tabs button.selected{border-color:var(--teal);background:var(--teal);color:#fff}
+@media(max-width:900px){
+  .profile-card.expanded{grid-template-columns:1fr}
+  .profile-card.expanded .module-list{grid-column:1;grid-row:auto}
+  .editor-toolbar{align-items:stretch;flex-direction:column}
+  .group-tabs{justify-content:flex-start;margin-left:0}
+}
+@media(max-width:560px){
+  .group-row{grid-template-columns:24px minmax(58px,max-content) minmax(0,1fr) auto;gap:5px;padding:4px 5px;font-size:.82rem}
+  .group-row>span{width:22px;height:22px}
+  .group-row small{font-size:.72rem}
+  .editor-actions{display:grid;grid-template-columns:1fr 1fr}
+  .editor-actions>*{justify-content:center}
+  .group-tabs{display:grid;grid-template-columns:repeat(5,1fr)}
+  .group-tabs button{padding:6px 4px;font-size:.8rem}
+}
