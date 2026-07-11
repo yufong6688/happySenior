@@ -55,3 +55,27 @@
   .group-tabs{display:grid;grid-template-columns:repeat(5,1fr)}
   .group-tabs button{padding:6px 4px;font-size:.8rem}
 }
+
+/* ?????????????????????? */
+.profile-card.expanded{grid-template-columns:minmax(330px,.55fr) minmax(0,1fr) auto;column-gap:28px}
+.profile-card.expanded .profile-header{grid-column:1;grid-row:1}
+.profile-card.expanded>.profile-toggle{grid-column:3;grid-row:1;align-self:start}
+.profile-card.expanded .module-list{grid-column:2;grid-row:1;padding-left:18px}
+.profile-title{min-width:0}
+.profile-title>div{min-width:0}
+.profile-title span{font-size:1.2rem}
+.profile-title h2{font-size:2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.profile-card.compact{grid-template-columns:minmax(0,1fr) auto}
+.profile-card.compact .profile-header{grid-column:1;grid-row:1}
+.profile-card.compact>.profile-toggle{grid-column:2;grid-row:1;align-self:start}
+.profile-card.compact .module-picker{grid-column:1/-1}
+@media(max-width:900px){
+  .profile-card.expanded{grid-template-columns:minmax(0,1fr) auto}
+  .profile-card.expanded>.profile-toggle{grid-column:2;grid-row:1}
+  .profile-card.expanded .module-list{grid-column:1/-1;grid-row:2;padding-left:0}
+  .profile-title h2{font-size:1.85rem}
+}
+@media(max-width:560px){
+  .profile-card.expanded{column-gap:12px}
+  .profile-title h2{font-size:1.6rem}
+}

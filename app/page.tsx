@@ -166,8 +166,8 @@ export default function Home(){
     <section className={"profile-card "+(profileOpen?"expanded":"compact")}>
       <div className="profile-header">
         <div className="profile-title"><img src="/chen-yufong-logo.png" alt="陳裕豐（順豐）Logo"/><div><span>模組老師</span><h2>{config.instructor||"陳裕豐（順豐）"}</h2></div></div>
-        <button className="profile-toggle icon-button" aria-label={profileOpen?"\u96b1\u85cf\u57fa\u672c\u8cc7\u6599":"\u5c55\u958b\u57fa\u672c\u8cc7\u6599"} title={profileOpen?"\u96b1\u85cf\u57fa\u672c\u8cc7\u6599":"\u5c55\u958b\u57fa\u672c\u8cc7\u6599"} onClick={()=>setProfileOpen(!profileOpen)}><span aria-hidden="true">{profileOpen?"\u2303":"\u2304"}</span></button>
       </div>
+        <button className="profile-toggle icon-button" aria-label={profileOpen?"\u96b1\u85cf\u57fa\u672c\u8cc7\u6599":"\u5c55\u958b\u57fa\u672c\u8cc7\u6599"} title={profileOpen?"\u96b1\u85cf\u57fa\u672c\u8cc7\u6599":"\u5c55\u958b\u57fa\u672c\u8cc7\u6599"} onClick={()=>setProfileOpen(!profileOpen)}><span aria-hidden="true">{profileOpen?"\u2303":"\u2304"}</span></button>
       {profileOpen ? <div className="module-list">{config.modules.map((module,index)=><div key={module+index}><span>{index+1}</span><b>{module}</b></div>)}</div> : <div className="module-picker"><label htmlFor="current-module">目前上課模組</label><select id="current-module" value={selectedModule} onChange={e=>setSelectedModule(Number(e.target.value))}>{config.modules.map((module,index)=><option key={module+index} value={index}>{module}</option>)}</select></div>}
     </section>
     <section className="hero-grid">
