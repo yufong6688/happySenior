@@ -72,6 +72,8 @@ export default function Home(){
   const [text,setText]=useState(FALLBACK);
   const [source,setSource]=useState("內建範例");
   const [config,setConfig]=useState<Config>(()=>parseConfig(FALLBACK));
+  const [profileOpen,setProfileOpen]=useState(true);
+  const [selectedModule,setSelectedModule]=useState(0);
   const [playing,setPlaying]=useState(false);
   const [groupIndex,setGroupIndex]=useState(0);
   const [stepIndex,setStepIndex]=useState(-1);
@@ -150,6 +152,13 @@ export default function Home(){
 
   return <main className="app-shell">
     <header className="topbar"><div className="brand"><img src="/chen-yufong-logo.png" alt="陳裕豐（順豐）的銀髮活力 Logo"/><div><span>happySenior 銀髮活力工具</span><h1>拍手節奏編輯器</h1><p className="instructor-name">指導員：陳裕豐（順豐）</p></div></div><div className="status-pill"><i className={playing?"on":""}/>{playing?"播放中":"待機"}</div></header>
+    <section className={"profile-card "+(profileOpen?"expanded":"compact")}>
+      <div className="profile-header">
+        <div className="profile-title"><img src="/chen-yufong-logo.png" alt="陳裕豐（順豐）Logo"/><div><span>模組老師</span><h2>{config.instructor||"陳裕豐（順豐）"}</h2></div></div>
+        <button className="profile-toggle" onClick={()=>setProfileOpen(!profileOpen)}>{profileOpen?"隱藏基本資料":"展開基本資料"}</button>
+      </div>
+      {profileOpen ? <div className="module-list">{config.modules.map((module,index)=><div key={module+index}><span>{index+1}</span><b>{module}</b></div>)}</div> : <div className="module-picker"><label htmlFor="current-module">目前上課模組</label><select id="current-module" value={selectedModule} onChange={e=>setSelectedModule(Number(e.target.value))}>{config.modules.map((module,index)=><option key={module+index} value={index}>{module}</option>)}</select><strong>{config.modules[selectedModule]||"尚未設定模組"}</strong></div>}
+    </section>
     <section className="hero-grid">
       <div className={"beat-stage "+(playing?"is-playing ":"")+(currentSymbol==="X"?"is-rest":"")}><small>現在節拍・第 {groupIndex+1} 組</small><strong className="beat-symbol">{currentSymbol}</strong><b>{currentGroup?.name||"準備開始"}</b><p>{status}</p><div className="progress">{currentGroup?.sequence.map((s,i)=><span key={s+i} className={i===stepIndex?"active":""}>{s}</span>)}</div></div>
       <div className="control-card playlist-card"><div className="playlist-head"><div><span className="source-badge">來源：{source}</span><h2>節奏播放清單</h2></div><b>{config.groups.length} 組</b></div>
@@ -161,10 +170,7 @@ export default function Home(){
     </section>
 
 
-    <section className="profile-card">
-      <div className="profile-title"><img src="/chen-yufong-logo.png" alt="陳裕豐（順豐）Logo"/><div><span>模組老師</span><h2>{config.instructor||"陳裕豐（順豐）"}</h2><p>已完成／目前顯示的模組資料由設計檔控制</p></div></div>
-      <div className="module-list">{config.modules.map((module,index)=><div key={module+index}><span>{index+1}</span><b>{module}</b></div>)}</div>
-    </section>
+
     <section className="editor-panel">
       <details><summary><span><b>文字設計檔編輯器</b><small>點擊展開，可修改 default.txt 或載入其他設計檔</small></span><strong>展開編輯</strong></summary>
         <div className="editor-toolbar"><label className="mini-file"><input type="file" accept=".txt,text/plain" onChange={loadDesign}/>讀取其他 .txt</label><button onClick={()=>fetch("/default.txt?"+Date.now()).then(r=>r.text()).then(t=>applyText(t,"default.txt"))}>重新讀取 default.txt</button><button onClick={saveDesign}>另存設計檔</button><button className="apply" onClick={()=>applyText(text,source)}>套用文字內容</button></div>
