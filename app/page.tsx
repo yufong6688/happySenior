@@ -13,6 +13,16 @@ TOTAL_LOOPS=2
 MASTER_VOLUME=75
 # MUSIC_VOLUME：MP3 背景音量百分比，範圍 0～100。
 MUSIC_VOLUME=45
+# INSTRUCTOR：模組老師姓名。
+INSTRUCTOR=陳裕豐（順豐）
+# MODULE：已完成且要顯示的模組；加上 # 就不會顯示。
+MODULE=ＣＬ-０１-０４０７義大養生八段錦
+MODULE=ＣＬ-０１-０４９２運用中醫多元方式延緩失能（ 五禽戲 ）
+# MODULE=ＣＬ-０１-００６０音活音樂體適能
+# MODULE=ＣＬ-０１-０４９５小港醫院三動顧健康
+# MODULE=ＣＬ-０１-０２６８高醫大出力動起來
+MODULE=ＣＬ-０１-０１４２健體防跌協助員
+MODULE=ＣＬ-０１-０２６９動動健康班協助員
 # GROUP 格式：GROUP=組名|節奏字串|本組循環次數
 # 節奏可使用 0-9、A-Z；X 代表休息一拍。
 # 本組循環設 0 代表持續循環，不會進到下一組。
@@ -22,14 +32,14 @@ GROUP=收尾|1234XXXX|1
 `;
 
 type Group={name:string;sequence:string[];loops:number;raw:string};
-type Config={groups:Group[];bpm:number;totalLoops:number;volume:number;musicVolume:number;errors:string[]};
+type Config={groups:Group[];bpm:number;totalLoops:number;volume:number;musicVolume:number;instructor:string;modules:string[];errors:string[]};
 
 function legacy(value:string){
   const m=value.trim().toUpperCase().match(/^(.*?)(?:-(\d+))?$/);
   return {pattern:(m?.[1]||"").replace(/[\s,，|｜]/g,""),loops:m?.[2]===undefined?1:Number(m[2])};
 }
 function parseConfig(text:string):Config{
-  const config:Config={groups:[],bpm:96,totalLoops:1,volume:75,musicVolume:45,errors:[]};
+  const config:Config={groups:[],bpm:96,totalLoops:1,volume:75,musicVolume:45,instructor:"",modules:[],errors:[]};
   for(const original of text.split(/\r?\n/)){
     const line=original.trim();
     if(!line||line.startsWith("#"))continue;
@@ -41,6 +51,8 @@ function parseConfig(text:string):Config{
     else if(key==="TOTAL_LOOPS")config.totalLoops=Math.max(0,Number(value)||0);
     else if(key==="MASTER_VOLUME")config.volume=Math.min(100,Math.max(0,Number(value)||0));
     else if(key==="MUSIC_VOLUME")config.musicVolume=Math.min(100,Math.max(0,Number(value)||0));
+    else if(key==="INSTRUCTOR")config.instructor=value;
+    else if(key==="MODULE")config.modules.push(value);
     else if(key==="GROUP"){
       const parts=value.split("|").map(v=>v.trim());
       let name="",pattern="",loops=1;
@@ -120,6 +132,19 @@ export default function Home(){
   useEffect(()=>()=>{if(timerRef.current)clearInterval(timerRef.current);if(urlRef.current)URL.revokeObjectURL(urlRef.current);void ctxRef.current?.close()},[]);
 
   const loadDesign=(e:ChangeEvent<HTMLInputElement>)=>{const file=e.target.files?.[0];if(!file)return;file.text().then(t=>applyText(t,file.name))};
+
+  const saveDesign=async()=>{
+    const suggested=source.toLowerCase().endsWith(".txt")?source:"happySenior-design.txt";
+    const blob=new Blob([text],{type:"text/plain;charset=utf-8"});
+    const picker=(window as unknown as {showSaveFilePicker?:(options:unknown)=>Promise<{createWritable:()=>Promise<{write:(data:Blob)=>Promise<void>;close:()=>Promise<void>}>}>}).showSaveFilePicker;
+    if(picker){
+      try{
+        const handle=await picker({suggestedName:suggested,types:[{description:"文字設計檔",accept:{"text/plain":[".txt"]}}]});
+        const writable=await handle.createWritable();await writable.write(blob);await writable.close();setStatus("已另存設計檔："+suggested);return;
+      }catch(error){if(error instanceof DOMException&&error.name==="AbortError")return}
+    }
+    const url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download=suggested;link.click();URL.revokeObjectURL(url);setStatus("已下載設計檔："+suggested);
+  };
   const chooseMusic=(e:ChangeEvent<HTMLInputElement>)=>{const file=e.target.files?.[0];if(!file)return;if(urlRef.current)URL.revokeObjectURL(urlRef.current);const u=URL.createObjectURL(file);urlRef.current=u;if(!audioRef.current)audioRef.current=new Audio();audioRef.current.src=u;setMusicName(file.name);setStatus("已載入背景音樂："+file.name)};
   const setParameter=(key:string,value:number)=>{const re=new RegExp("^"+key+"\\s*=.*$","mi");const next=re.test(text)?text.replace(re,key+"="+value):key+"="+value+"\n"+text;applyText(next,source)};
 
@@ -135,9 +160,14 @@ export default function Home(){
       </div>
     </section>
 
+
+    <section className="profile-card">
+      <div className="profile-title"><img src="/chen-yufong-logo.png" alt="陳裕豐（順豐）Logo"/><div><span>模組老師</span><h2>{config.instructor||"陳裕豐（順豐）"}</h2><p>已完成／目前顯示的模組資料由設計檔控制</p></div></div>
+      <div className="module-list">{config.modules.map((module,index)=><div key={module+index}><span>{index+1}</span><b>{module}</b></div>)}</div>
+    </section>
     <section className="editor-panel">
       <details><summary><span><b>文字設計檔編輯器</b><small>點擊展開，可修改 default.txt 或載入其他設計檔</small></span><strong>展開編輯</strong></summary>
-        <div className="editor-toolbar"><label className="mini-file"><input type="file" accept=".txt,text/plain" onChange={loadDesign}/>讀取其他 .txt</label><button onClick={()=>fetch("/default.txt?"+Date.now()).then(r=>r.text()).then(t=>applyText(t,"default.txt"))}>重新讀取 default.txt</button><button className="apply" onClick={()=>applyText(text,source)}>套用文字內容</button></div>
+        <div className="editor-toolbar"><label className="mini-file"><input type="file" accept=".txt,text/plain" onChange={loadDesign}/>讀取其他 .txt</label><button onClick={()=>fetch("/default.txt?"+Date.now()).then(r=>r.text()).then(t=>applyText(t,"default.txt"))}>重新讀取 default.txt</button><button onClick={saveDesign}>另存設計檔</button><button className="apply" onClick={()=>applyText(text,source)}>套用文字內容</button></div>
         <textarea value={text} onChange={e=>setText(e.target.value)} spellCheck={false} aria-label="節奏設計檔文字編輯器"/>
         <p>所有參數與格式說明都寫在檔案的 <code># 註解</code> 中；修改後請按「套用文字內容」。</p>
       </details>
