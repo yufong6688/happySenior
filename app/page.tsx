@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const SYMBOLS="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
@@ -124,7 +124,7 @@ export default function Home(){
   const setParameter=(key:string,value:number)=>{const re=new RegExp("^"+key+"\\s*=.*$","mi");const next=re.test(text)?text.replace(re,key+"="+value):key+"="+value+"\n"+text;applyText(next,source)};
 
   return <main className="app-shell">
-    <header className="topbar"><div className="brand"><img src="/happySenior-logo.svg" alt=""/><div><span>happySenior 銀髮活力工具</span><h1>拍手節奏編輯器</h1></div></div><div className="status-pill"><i className={playing?"on":""}/>{playing?"播放中":"待機"}</div></header>
+    <header className="topbar"><div className="brand"><img src="/chen-yufong-logo.png" alt="陳裕豐（順豐）的銀髮活力 Logo"/><div><span>happySenior 銀髮活力工具</span><h1>拍手節奏編輯器</h1><p className="instructor-name">指導員：陳裕豐（順豐）</p></div></div><div className="status-pill"><i className={playing?"on":""}/>{playing?"播放中":"待機"}</div></header>
     <section className="hero-grid">
       <div className={"beat-stage "+(playing?"is-playing ":"")+(currentSymbol==="X"?"is-rest":"")}><small>現在節拍・第 {groupIndex+1} 組</small><strong className="beat-symbol">{currentSymbol}</strong><b>{currentGroup?.name||"準備開始"}</b><p>{status}</p><div className="progress">{currentGroup?.sequence.map((s,i)=><span key={s+i} className={i===stepIndex?"active":""}>{s}</span>)}</div></div>
       <div className="control-card playlist-card"><div className="playlist-head"><div><span className="source-badge">來源：{source}</span><h2>節奏播放清單</h2></div><b>{config.groups.length} 組</b></div>
@@ -149,6 +149,6 @@ export default function Home(){
     </section>
 
     <section className="sound-section"><div className="section-title"><em>3</em><div><h2>36 種聲音試聽</h2><p>點一下字元即可試聽；X 在節奏設計中代表休息。</p></div></div><div className="sound-grid">{SYMBOLS.map((s,i)=><button key={s} className={s==="X"?"special":""} onClick={()=>sound(s,true)}><b>{s}</b><span>{NAMES[i]}</span></button>)}</div></section>
-    <footer>happySenior・讓每一次拍手都充滿活力</footer>
+    <footer><b>陳裕豐（順豐）</b><span>happySenior・讓每一次拍手都充滿活力</span></footer>
   </main>
 }

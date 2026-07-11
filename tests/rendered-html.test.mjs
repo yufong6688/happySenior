@@ -8,7 +8,7 @@ async function render(){
   const {default:worker}=await import(workerUrl.href);
   return worker.fetch(new Request("http://localhost/",{headers:{accept:"text/html"}}),{ASSETS:{fetch:async()=>new Response("Not found",{status:404})}},{waitUntil(){},passThroughOnException(){}});
 }
-test("server renders the multi-group rhythm editor",async()=>{
+test("server renders the branded multi-group rhythm editor",async()=>{
   const response=await render();assert.equal(response.status,200);
   const html=await response.text();
   assert.match(html,/happySenior 拍手節奏編輯器/);
@@ -16,6 +16,8 @@ test("server renders the multi-group rhythm editor",async()=>{
   assert.match(html,/文字設計檔編輯器/);
   assert.match(html,/讀取其他 \.txt/);
   assert.match(html,/總循環次數/);
+  assert.match(html,/陳裕豐（順豐）/);
+  assert.match(html,/chen-yufong-logo\.png/);
   assert.doesNotMatch(html,/codex-preview|Your site is taking shape/);
 });
 test("source supports default.txt and multiple groups",async()=>{
