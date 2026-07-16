@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中華民國年曆年齡計算器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', '微軟正黑體', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
+        }
+
+        .title {
+            color: #2c3e50;
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+
+        .current-year {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 10px 20px rgba(238, 90, 36, 0.3);
+        }
+
+        .input-group {
+            margin-bottom: 30px;
+        }
+
+        .input-label {
+            display: block;
+            color: #2c3e50;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            border: 3px solid #e0e6ed;
+            border-radius: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.2);
+            transform: scale(1.02);
+        }
+
+        .calculate-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .calculate-btn:active {
+            transform: translateY(0);
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: linear-gradient(45deg, #2ecc71, #27ae60);
+            color: white;
+            border-radius: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            box-shadow: 0 10px 20px rgba(46, 204, 113, 0.3);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        .result.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .error {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            box-shadow: 0 10px 20px rgba(231, 76, 60, 0.3);
+        }
+
+        .info-box {
+            background: rgba(52, 152, 219, 0.1);
+            border: 2px solid #3498db;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            color: #2c3e50;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .conversion-table {
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 14px;
+            color: #2c3e50;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">中華民國年曆年齡計算器</h1>
+        <p class="subtitle">Republic of China Calendar Age Calculator</p>
+        
+        <div class="current-year">
+            <div>今年：民國 <span id="currentROCYear"></span> 年</div>
+            <div>西元 <span id="currentADYear"></span> 年</div>
+        </div>
+
+        <div class="input-group">
+            <label class="input-label" for="birthYear">請輸入您的出生年份</label>
+            <input type="number" id="birthYear" class="input-field" placeholder="例如：85（民國）或 1996（西元）" min="1" max="2100">
+            <div style="font-size: 14px; color: #7f8c8d; margin-top: 8px;">
+                系統會自動判斷民國年或西元年
+            </div>
+        </div>
+
+        <button class="calculate-btn" onclick="calculateAge()">計算年齡</button>
+
+        <div id="result" class="result"></div>
+
+        <div class="info-box">
+            <strong>使用說明：</strong><br>
+            • 直接輸入出生年份，系統會自動判斷<br>
+            • 1-150：自動識別為民國年<br>
+            • 1912以上：自動識別為西元年<br>
+            • 年齡計算以足歲為準
+        </div>
+
+        <div class="conversion-table">
+            <strong>自動判斷規則：</strong><br>
+            • 1-150：判斷為民國年（如：85 = 民國85年 = 西元1996年）<br>
+            • 1912以上：判斷為西元年（如：1996 = 西元1996年 = 民國85年）<br><br>
+            <strong>常見年份對照：</strong><br>
+            民國50年=1961年 | 民國70年=1981年 | 民國90年=2001年
+        </div>
+    </div>
+
+    <script>
+        // 取得當前年份
+        const currentADYear = new Date().getFullYear();
+        const currentROCYear = currentADYear - 1911;
+
+        // 顯示當前年份
+        document.getElementById('currentADYear').textContent = currentADYear;
+        document.getElementById('currentROCYear').textContent = currentROCYear;
+
+        function calculateAge() {
+            const birthYearInput = document.getElementById('birthYear');
+            const resultDiv = document.getElementById('result');
+            
+            // 清除之前的結果
+            resultDiv.classList.remove('show', 'error');
+            
+            const inputYear = parseInt(birthYearInput.value);
+            
+            // 驗證輸入
+            if (!inputYear || isNaN(inputYear)) {
+                showResult('請輸入有效的年份！', true);
+                return;
+            }
+            
+            let birthROCYear, birthADYear, yearType;
+            
+            // 自動判斷民國年或西元年
+            if (inputYear >= 1 && inputYear <= 150) {
+                // 判斷為民國年
+                birthROCYear = inputYear;
+                birthADYear = inputYear + 1911;
+                yearType = '民國年';
+            } else if (inputYear >= 1912) {
+                // 判斷為西元年
+                birthADYear = inputYear;
+                birthROCYear = inputYear - 1911;
+                yearType = '西元年';
+            } else {
+                showResult('請輸入有效的年份範圍！', true);
+                return;
+            }
+            
+            // 驗證年份合理性
+            if (birthADYear > currentADYear) {
+                showResult('出生年份不能大於今年！', true);
+                return;
+            }
+            
+            if (birthADYear < 1912) {
+                showResult('年份過早，請輸入民國元年（1912年）之後的年份！', true);
+                return;
+            }
+            
+            // 計算年齡
+            const age = currentROCYear - birthROCYear;
+            
+            // 顯示結果
+            const resultHTML = `
+                <div class="pulse">
+                    <div style="font-size: 24px; margin-bottom: 10px;">🎂 您今年 ${age} 歲</div>
+                    <div style="font-size: 16px; opacity: 0.9;">
+                        輸入：${inputYear}（系統判斷為${yearType}）<br>
+                        出生：民國 ${birthROCYear} 年（西元 ${birthADYear} 年）<br>
+                        今年：民國 ${currentROCYear} 年（西元 ${currentADYear} 年）
+                    </div>
+                </div>
+            `;
+            
+            showResult(resultHTML, false);
+        }
+        
+        function showResult(message, isError) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = message;
+            
+            if (isError) {
+                resultDiv.classList.add('error');
+            } else {
+                resultDiv.classList.remove('error');
+            }
+            
+            // 延遲顯示動畫效果
+            setTimeout(() => {
+                resultDiv.classList.add('show');
+            }, 100);
+        }
+        
+        // 按Enter鍵也能計算
+        document.getElementById('birthYear').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                calculateAge();
+            }
+        });
+        
+        // 點擊輸入框時自動選取全部文字
+        document.getElementById('birthYear').addEventListener('click', function(e) {
+            this.select();
+        });
+        
+        // 獲得焦點時也自動選取全部文字
+        document.getElementById('birthYear').addEventListener('focus', function(e) {
+            this.select();
+        });
+        
+        // 輸入驗證
+        document.getElementById('birthYear').addEventListener('input', function(e) {
+            // 移除非數字字符
+            this.value = this.value.replace(/[^0-9]/g, '');
+            
+            // 限制最大長度
+            if (this.value.length > 4) {
+                this.value = this.value.slice(0, 4);
+            }
+            
+            // 清除結果
+            const resultDiv = document.getElementById('result');
+            resultDiv.classList.remove('show');
+        });
+    </script>
+</body>
+</html>
